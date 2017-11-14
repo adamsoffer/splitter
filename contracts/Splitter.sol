@@ -40,7 +40,8 @@ contract Splitter is Mortal {
     require(balances[msg.sender] > 0);
     uint balance = balances[msg.sender];
 
-    // Set user's balance to zero before transfering funds
+    // Question: is it advised to explicitly set the users funds to zero
+    // before transfering or is this uneccessary?
     balances[msg.sender] = 0;
 
     msg.sender.transfer(balance);
