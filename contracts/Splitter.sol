@@ -15,11 +15,12 @@ contract Splitter is Mortal {
     // Make sure there is in fact ether being sent
     require(msg.value > 0);
 
-    // check for empty/incorrect addresses
+    // Check for empty/incorrect addresses
     require(bob != address(0));
     require(carol != address(0));
 
-    // Split value between bob and carol
+    // TODO: account for the fact that odd values may leave 1 wei in the
+    // contract balance
     balances[bob] += msg.value / 2;
     balances[carol] += msg.value / 2;
 
@@ -27,7 +28,19 @@ contract Splitter is Mortal {
     return true;
   }
 
+  // Fallback function
   function() public {
     revert();
+  }
+
+  function withdraw() public returns (bool success) {
+    require(balances[msg.sender] > 0);
+    uint balace = balances[msg.sender];
+
+    // Set user's balance to zero before transfering funds
+    balace[msg.sender] = 0;
+
+    msg.sender.transfer(balace);
+    return true;
   }
 }
