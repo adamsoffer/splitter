@@ -11,6 +11,8 @@ contract Splitter is Mortal {
     uint carolBalance
   );
 
+  // Using bob and carol as named arguments but this function is a utility
+  // that anyone can use.
   function deposit(address bob, address carol) public payable returns (bool success) {
     // Make sure there is in fact ether being sent
     require(msg.value > 0);
@@ -33,14 +35,15 @@ contract Splitter is Mortal {
     revert();
   }
 
+  // Allow bob and carol to withdraw balance
   function withdraw() public returns (bool success) {
     require(balances[msg.sender] > 0);
-    uint balace = balances[msg.sender];
+    uint balance = balances[msg.sender];
 
     // Set user's balance to zero before transfering funds
-    balace[msg.sender] = 0;
+    balances[msg.sender] = 0;
 
-    msg.sender.transfer(balace);
+    msg.sender.transfer(balance);
     return true;
   }
 }
