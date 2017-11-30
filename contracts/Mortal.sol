@@ -2,7 +2,7 @@ pragma solidity ^0.4.4;
 
 
 contract Mortal {
-  address owner;
+  address public owner;
 
   function Mortal() public {
     owner = msg.sender;
