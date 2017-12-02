@@ -5,10 +5,10 @@ import "./Mortal.sol";
 
 contract Splitter is Mortal {
   mapping(address => uint) public balances;
+
   event LogDeposit(
-    uint contractBalance,
-    uint bobBalance,
-    uint carolBalance
+    address indexed _from,
+    uint indexed _value
   );
 
   // Using bob and carol as named arguments but this function is a utility
@@ -22,11 +22,11 @@ contract Splitter is Mortal {
     require(carol != address(0));
 
     uint bobBalance = msg.value / 2;
-    uint carolBalance = msg.value - bobBalance; // account for the fact that odd values may leave 1 wei in the contact
+    uint carolBalance = msg.value - bobBalance; // accounts for the fact that odd values may leave 1 wei in the contact
     balances[bob] += bobBalance;
     balances[carol] += carolBalance;
 
-    LogDeposit(this.balance, balances[bob], balances[carol]);
+    LogDeposit(msg.sender, msg.value);
     return true;
   }
 

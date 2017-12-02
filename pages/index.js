@@ -21,7 +21,11 @@ export default class extends React.Component {
     }
   }
 
-  state = {}
+  state = {
+    contractValue: 0,
+    bobValue: 0,
+    carolValue: 0
+  }
 
   componentDidMount() {
     Splitter.deployed().then(instance => {
@@ -76,32 +80,18 @@ export default class extends React.Component {
   }
 
   onDeposit() {
-    let contractBalance
-    let bobBalance
-    let carolBalance
-
+    let event
+    let value
     Splitter.deployed().then(instance => {
-      let event = instance.LogDeposit()
-
+      event = instance.LogDeposit()
       // watch for changes
       event.watch((error, event) => {
         if (!error) {
-          contractBalance = window.web3.fromWei(
-            event.args.contractBalance.toString(),
-            'ether'
-          )
-          bobBalance = window.web3.fromWei(
-            event.args.bobBalance.toString(),
-            'ether'
-          )
-          carolBalance = window.web3.fromWei(
-            event.args.carolBalance.toString(),
-            'ether'
-          )
+          value = window.web3.fromWei(event.args._value.toString(), 'ether')
           this.setState({
-            contractBalance,
-            bobBalance,
-            carolBalance
+            contractBalance: this.state.contactBalance + value,
+            bobBalance: this.state.bobBalance + value / 2,
+            carolBalance: this.state.carolBalance + value / 2
           })
         } else {
           console.log(error)
