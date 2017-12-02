@@ -1,5 +1,6 @@
 pragma solidity ^0.4.4;
 
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./Mortal.sol";
 
 
@@ -21,7 +22,7 @@ contract Splitter is Mortal {
     require(bob != address(0));
     require(carol != address(0));
 
-    uint bobBalance = msg.value / 2;
+    uint bobBalance = SafeMath.div(msg.value, 2);
     uint carolBalance = msg.value - bobBalance; // accounts for the fact that odd values may leave 1 wei in the contact
     balances[bob] += bobBalance;
     balances[carol] += carolBalance;
