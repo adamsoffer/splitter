@@ -21,10 +21,10 @@ contract Splitter is Mortal {
     require(bob != address(0));
     require(carol != address(0));
 
-    // TODO: account for the fact that odd values may leave 1 wei in the
-    // contract balance
-    balances[bob] += msg.value / 2;
-    balances[carol] += msg.value / 2;
+    uint bobBalance = msg.value / 2;
+    uint carolBalance = msg.value - bobBalance; // account for the fact that odd values may leave 1 wei in the contact
+    balances[bob] += bobBalance;
+    balances[carol] += carolBalance;
 
     LogDeposit(this.balance, balances[bob], balances[carol]);
     return true;
