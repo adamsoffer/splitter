@@ -37,11 +37,10 @@ contract Splitter is Mortal {
 
   // Allow bob and carol to withdraw balance
   function withdraw() public returns (bool success) {
-    require(balances[msg.sender] > 0);
     uint balance = balances[msg.sender];
+    require(balance > 0);
 
-    // Question: is it advised to explicitly set the users funds to zero
-    // before transfering or is this uneccessary?
+    // Update state before transfering
     balances[msg.sender] = 0;
 
     msg.sender.transfer(balance);
