@@ -33,7 +33,7 @@ contract Splitter is Mortal {
     balances[bob] = balances[bob].add(bobBalance);
     balances[carol] = balances[carol].add(carolBalance);
 
-    LogDeposit(msg.sender, msg.value, bob, carol);
+    LogDeposit(msg.sender, bob, carol, msg.value);
     return true;
   }
 
