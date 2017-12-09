@@ -8,8 +8,10 @@ contract Splitter is Mortal {
   mapping(address => uint) public balances;
 
   event LogDeposit(
-    address indexed _from,
-    uint indexed _value
+    address indexed from,
+    uint indexed deposit,
+    address bob,
+    address carol
   );
 
   // Using bob and carol as named arguments but this function is a utility
@@ -27,7 +29,7 @@ contract Splitter is Mortal {
     balances[bob] += bobBalance;
     balances[carol] += carolBalance;
 
-    LogDeposit(msg.sender, msg.value);
+    LogDeposit(msg.sender, msg.value, bob, carol);
     return true;
   }
 
