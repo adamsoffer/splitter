@@ -21,6 +21,7 @@
   "author": "Adam Soffer",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "ethjs": "^0.3.0",
     "express": "^4.16.2",
     "glamor": "^2.20.40",
