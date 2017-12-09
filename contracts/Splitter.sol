@@ -5,6 +5,7 @@ import "./Mortal.sol";
 
 
 contract Splitter is Mortal {
+  using SafeMath for uint;
   mapping(address => uint) public balances;
 
   event LogDeposit(
@@ -24,10 +25,13 @@ contract Splitter is Mortal {
     require(bob != address(0));
     require(carol != address(0));
 
-    uint bobBalance = SafeMath.div(msg.value, 2);
-    uint carolBalance = msg.value - bobBalance; // accounts for the fact that odd values may leave 1 wei in the contact
-    balances[bob] += bobBalance;
-    balances[carol] += carolBalance;
+    uint bobBalance = msg.value.div(2);
+    
+    // accounts for the fact that odd values may leave 1 wei in the contact
+    uint carolBalance = msg.value.sub(bobBalance);
+  
+    balances[bob] = balances[bob].add(bobBalance);
+    balances[carol] = balances[carol].add(carolBalance);
 
     LogDeposit(msg.sender, msg.value, bob, carol);
     return true;
