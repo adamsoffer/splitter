@@ -81,17 +81,17 @@ export default class extends React.Component {
 
   onDeposit() {
     let event
-    let value
+    let deposit
     Splitter.deployed().then(instance => {
       event = instance.LogDeposit()
       // watch for changes
       event.watch((error, event) => {
         if (!error) {
-          value = window.web3.fromWei(event.args._value.toString(), 'ether')
+          deposit = window.web3.fromWei(event.args.deposit.toString(), 'ether')
           this.setState({
-            contractBalance: this.state.contactBalance + value,
-            bobBalance: this.state.bobBalance + value / 2,
-            carolBalance: this.state.carolBalance + value / 2
+            contractBalance: this.state.contactBalance + deposit,
+            bobBalance: this.state.bobBalance + deposit / 2,
+            carolBalance: this.state.carolBalance + deposit / 2
           })
         } else {
           console.log(error)
