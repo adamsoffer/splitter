@@ -10,9 +10,9 @@ contract Splitter is Mortal {
 
   event LogDeposit(
     address indexed from,
-    uint indexed deposit,
-    address bob,
-    address carol
+    address indexed bob,
+    address indexed carol,
+    uint deposit
   );
 
   // Using bob and carol as named arguments but this function is a utility
