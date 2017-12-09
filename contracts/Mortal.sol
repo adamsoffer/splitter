@@ -19,8 +19,6 @@ contract Mortal {
 
   /* Function to recover the funds on the contract */
   function kill() public onlyOwner {
-    if (msg.sender == owner) {
-      selfdestruct(owner);
-    }
+    selfdestruct(owner);
   }
 }
