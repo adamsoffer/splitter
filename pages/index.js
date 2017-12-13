@@ -5,7 +5,6 @@ import web3 from '../lib/web3'
 import Main from '../lib/layout'
 import Button from '../components/Button'
 import Textfield from '../components/Textfield'
-import 'isomorphic-fetch'
 
 const bobAddress = '0x8B578b413186cD75590372ACacB6FaC64e9EAD12'
 const carolAddress = '0xcd8148C45ABFF4b3F01faE5aD31bC96AD6425054'
@@ -73,7 +72,9 @@ export default class extends React.Component {
           value: deposit
         })
       })
-      .then(instance => {})
+      .then(response => {
+        console.log(response)
+      })
       .catch(e => {
         console.log(e)
       })
