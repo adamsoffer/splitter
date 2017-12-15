@@ -1,5 +1,6 @@
 import React from 'react'
 import { default as contract } from 'truffle-contract'
+import Promise from 'bluebird'
 import splitterArtifacts from '../build/contracts/Splitter.json'
 import web3 from '../lib/web3'
 import Main from '../lib/layout'
@@ -10,54 +11,41 @@ const bobAddress = '0x8B578b413186cD75590372ACacB6FaC64e9EAD12'
 const carolAddress = '0xcd8148C45ABFF4b3F01faE5aD31bC96AD6425054'
 const Splitter = contract(splitterArtifacts)
 
+if (typeof web3.eth.getBlockPromise !== 'function') {
+  Promise.promisifyAll(web3.eth, { suffix: 'Promise' })
+}
+
 Splitter.setProvider(web3.currentProvider)
+
+Promise.promisifyAll(Splitter, { suffix: 'Promise' })
+
+// hack for web3@1.0.0 async/await support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof Splitter.currentProvider.sendAsync !== 'function') {
+  Splitter.currentProvider.sendAsync = function() {
+    return Splitter.currentProvider.send.apply(
+      Splitter.currentProvider,
+      arguments
+    )
+  }
+}
 
 export default class extends React.Component {
   static async getInitialProps({ pathname }) {
     const account = await getAccount()
+    const instance = await Splitter.deployed()
+    const contractBalance = await web3.eth.getBalance(instance.address)
+    const bobBalance = await instance.balances.call(bobAddress)
+    const carolBalance = await instance.balances.call(carolAddress)
     return {
-      account
+      account,
+      contractBalance,
+      bobBalance,
+      carolBalance
     }
   }
 
-  state = {
-    contractValue: 0,
-    bobValue: 0,
-    carolValue: 0
-  }
-
   componentDidMount() {
-    Splitter.deployed().then(instance => {
-      this.setBalances(instance)
-    })
     this.onDeposit()
-  }
-
-  setBalances(instance) {
-    // Get Contract Balance
-    web3.eth.getBalance(instance.address, (error, result) => {
-      if (!error) {
-        this.setState({
-          contractBalance: window.web3.fromWei(result.toString(), 'ether')
-        })
-      } else {
-        reject(error)
-      }
-    })
-
-    // Get Bob's Balance
-    instance.balances.call(bobAddress).then(instance => {
-      this.setState({
-        bobBalance: window.web3.fromWei(instance.toString(), 'ether')
-      })
-    })
-
-    // Get Carol's Balance
-    instance.balances.call(bobAddress).then(instance => {
-      this.setState({
-        carolBalance: window.web3.fromWei(instance.toString(), 'ether')
-      })
-    })
   }
 
   handleSubmit(event) {
@@ -88,12 +76,9 @@ export default class extends React.Component {
       // watch for changes
       event.watch((error, event) => {
         if (!error) {
-          deposit = window.web3.fromWei(event.args.deposit.toString(), 'ether')
-          this.setState({
-            contractBalance: this.state.contactBalance + deposit,
-            bobBalance: this.state.bobBalance + deposit / 2,
-            carolBalance: this.state.carolBalance + deposit / 2
-          })
+          deposit = web3.fromWei(event.args.deposit.toString(), 'ether')
+          // TODO: Use a state manager to update UI on deposit
+          console.log(deposit)
         } else {
           console.log(error)
         }
@@ -107,9 +92,18 @@ export default class extends React.Component {
         <div style={{ maxWidth: '500px', margin: '50px auto 0 auto' }}>
           <h1 style={{ fontSize: '32px', marginBottom: '20px' }}>Splitter</h1>
           <div style={{ lineHeight: 1.5, marginBottom: '30px' }}>
-            <div>Contract Balance: {this.state.contractBalance}</div>
-            <div>Bob's Balance: {this.state.bobBalance}</div>
-            <div>Carol's Balance: {this.state.carolBalance}</div>
+            <div>
+              Contract Balance:
+              {web3.utils.fromWei(this.props.contractBalance, 'ether')}
+            </div>
+            <div>
+              Bob's Balance:
+              {web3.utils.fromWei(this.props.bobBalance, 'ether')}
+            </div>
+            <div>
+              Carol's Balance:
+              {web3.utils.fromWei(this.props.carolBalance, 'ether')}
+            </div>
           </div>
           <form onSubmit={this.handleSubmit.bind(this)}>
             <input type="hidden" name="bob" value={bobAddress} />
