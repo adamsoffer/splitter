@@ -1,14 +1,13 @@
 import React from 'react'
 import { default as contract } from 'truffle-contract'
 import Promise from 'bluebird'
+import { Div, Span, H1, Form } from 'glamorous'
 import splitterArtifacts from '../build/contracts/Splitter.json'
 import web3 from '../lib/web3'
 import Main from '../lib/layout'
 import Button from '../components/Button'
 import Textfield from '../components/Textfield'
 
-const bobAddress = '0x8B578b413186cD75590372ACacB6FaC64e9EAD12'
-const carolAddress = '0xcd8148C45ABFF4b3F01faE5aD31bC96AD6425054'
 const Splitter = contract(splitterArtifacts)
 
 if (typeof web3.eth.getBlockPromise !== 'function') {
@@ -18,6 +17,8 @@ if (typeof web3.eth.getBlockPromise !== 'function') {
 Splitter.setProvider(web3.currentProvider)
 
 Promise.promisifyAll(Splitter, { suffix: 'Promise' })
+
+web3.eth.getTransactionReceiptMined = require('../lib/getTransactionReceiptMined.js')
 
 // hack for web3@1.0.0 async/await support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
 if (typeof Splitter.currentProvider.sendAsync !== 'function') {
@@ -31,37 +32,54 @@ if (typeof Splitter.currentProvider.sendAsync !== 'function') {
 
 export default class extends React.Component {
   static async getInitialProps({ pathname }) {
-    const account = await getAccount()
+    const accounts = await web3.eth.getAccounts()
     const instance = await Splitter.deployed()
     const contractBalance = await web3.eth.getBalance(instance.address)
-    const bobBalance = await instance.balances.call(bobAddress)
-    const carolBalance = await instance.balances.call(carolAddress)
+    const aliceBalance = await web3.eth.getBalance(accounts[0])
+    const bobBalance = await instance.balances.call(accounts[1])
+    const carolBalance = await instance.balances.call(accounts[2])
     return {
-      account,
+      accounts,
+      aliceBalance,
       contractBalance,
       bobBalance,
       carolBalance
     }
   }
 
+  constructor(props) {
+    super(props)
+    this.state = {
+      contractBalance: props.contractBalance,
+      aliceBalance: props.aliceBalance,
+      bobBalance: props.bobBalance,
+      carolBalance: props.carolBalance
+    }
+  }
+
   componentDidMount() {
     this.onDeposit()
+    this.onWithdraw()
   }
 
   handleSubmit(event) {
     event.preventDefault()
-    let deposit = window.web3.toWei(event.target.deposit.value, 'ether')
+    let deposit = web3.utils.toWei(event.target.deposit.value, 'ether')
     let bob = event.target.bob.value
     let carol = event.target.carol.value
-    Splitter.deployed()
+    return Splitter.deployed()
       .then(instance => {
-        return instance.deposit(bob, carol, {
-          from: this.props.account,
+        return instance.deposit.sendTransaction(bob, carol, {
+          from: this.props.accounts[0],
           value: deposit
         })
       })
-      .then(response => {
-        console.log(response)
+      .then(function(txHashes) {
+        console.log('pending confirmation...')
+        return web3.eth.getTransactionReceiptMined(txHashes)
+      })
+      .then(function(receipts) {
+        console.log('confirmed')
       })
       .catch(e => {
         console.log(e)
@@ -69,16 +87,37 @@ export default class extends React.Component {
   }
 
   onDeposit() {
-    let event
-    let deposit
     Splitter.deployed().then(instance => {
-      event = instance.LogDeposit()
       // watch for changes
-      event.watch((error, event) => {
+      instance.LogDeposit().watch((error, e) => {
         if (!error) {
-          deposit = web3.fromWei(event.args.deposit.toString(), 'ether')
-          // TODO: Use a state manager to update UI on deposit
-          console.log(deposit)
+          this.setState({
+            contractBalance: this.state.contractBalance + e.args.deposit,
+            aliceBalance: this.state.aliceBalance - deposit,
+            bobBalance: this.state.bobBalance + e.args.deposit / 2,
+            carolBalance:
+              this.state.carolBalance + (e.args.deposit - e.args.deposit / 2)
+          })
+        } else {
+          console.log(error)
+        }
+      })
+    })
+  }
+
+  onWithdraw() {
+    Splitter.deployed().then(instance => {
+      instance.LogWithdraw().watch((error, e) => {
+        if (!error) {
+          if (e.args.from === accounts[1]) {
+            this.setState({
+              bobBalance: this.state.bobBalance - e.args.withdrawnAmount
+            })
+          } else {
+            this.setState({
+              carolBalance: this.state.carolBalance - e.args.withdrawnAmount
+            })
+          }
         } else {
           console.log(error)
         }
@@ -89,25 +128,48 @@ export default class extends React.Component {
   render() {
     return (
       <Main>
-        <div style={{ maxWidth: '500px', margin: '50px auto 0 auto' }}>
-          <h1 style={{ fontSize: '32px', marginBottom: '20px' }}>Splitter</h1>
-          <div style={{ lineHeight: 1.5, marginBottom: '30px' }}>
-            <div>
-              Contract Balance:
-              {web3.utils.fromWei(this.props.contractBalance, 'ether')}
-            </div>
-            <div>
-              Bob's Balance:
-              {web3.utils.fromWei(this.props.bobBalance, 'ether')}
-            </div>
-            <div>
-              Carol's Balance:
-              {web3.utils.fromWei(this.props.carolBalance, 'ether')}
-            </div>
-          </div>
-          <form onSubmit={this.handleSubmit.bind(this)}>
-            <input type="hidden" name="bob" value={bobAddress} />
-            <input type="hidden" name="carol" value={carolAddress} />
+        <Div maxWidth="500px" margin="50px auto 0 auto">
+          <H1 fontSize="32px" marginBottom="20px">
+            Splitter
+          </H1>
+          <Div lineHeight="1.5" marginBottom="30px">
+            <Div>
+              <Span marginRight="5px">Contract Balance:</Span>
+              {web3.utils.fromWei(
+                this.state.contractBalance.toString(),
+                'ether'
+              )}
+            </Div>
+            <Div>
+              <Span marginRight="5px">Alice's Balance:</Span>
+              {web3.utils.fromWei(this.state.aliceBalance.toString(), 'ether')}
+            </Div>
+            <Div>
+              <Span marginRight="5px">Bob's Balance:</Span>
+              {web3.utils.fromWei(this.state.bobBalance.toString(), 'ether')}
+            </Div>
+            <Div>
+              <Span marginRight="5px">Carol's Balance:</Span>
+              {web3.utils.fromWei(this.state.carolBalance.toString(), 'ether')}
+            </Div>
+          </Div>
+          <Form onSubmit={this.handleSubmit.bind(this)}>
+            <Textfield
+              readonly
+              disabled
+              value={this.props.accounts[1]}
+              label="Bob Address"
+              type="text"
+              name="bob"
+            />
+            <Textfield
+              readonly
+              disabled
+              value={this.props.accounts[2]}
+              label="Carol Address"
+              type="text"
+              name="carol"
+            />
             <Textfield
               placeholder="ex: 10"
               step="any"
@@ -116,26 +178,9 @@ export default class extends React.Component {
               name="deposit"
             />
             <Button type="submit">Deposit</Button>
-          </form>
-        </div>
+          </Form>
+        </Div>
       </Main>
     )
   }
-}
-
-function getAccount() {
-  return new Promise(function(resolve, reject) {
-    web3.eth.getAccounts((err, accounts) => {
-      if (err != null) {
-        reject('There was an error fetching your accounts.')
-      }
-      if (accounts.length === 0) {
-        reject(
-          'Could not get any accounts! Make sure your Ethereum client is configured correctly.'
-        )
-        return
-      }
-      resolve(accounts[0])
-    })
-  })
 }

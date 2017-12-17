@@ -15,6 +15,11 @@ contract Splitter is Mortal {
     uint deposit
   );
 
+  event LogWithdraw(
+    address indexed from,
+    uint withdrawnAmount
+  );
+
   // Using bob and carol as named arguments but this function is a utility
   // that anyone can use.
   function deposit(address bob, address carol) public payable returns (bool success) {
@@ -25,13 +30,13 @@ contract Splitter is Mortal {
     require(bob != address(0));
     require(carol != address(0));
 
-    uint bobBalance = msg.value.div(2);
+    uint bobShare = msg.value.div(2);
     
     // accounts for the fact that odd values may leave 1 wei in the contact
-    uint carolBalance = msg.value.sub(bobBalance);
+    uint carolShare = msg.value.sub(bobShare);
   
-    balances[bob] = balances[bob].add(bobBalance);
-    balances[carol] = balances[carol].add(carolBalance);
+    balances[bob] = balances[bob].add(bobShare);
+    balances[carol] = balances[carol].add(carolShare);
 
     LogDeposit(msg.sender, bob, carol, msg.value);
     return true;
@@ -51,6 +56,7 @@ contract Splitter is Mortal {
     balances[msg.sender] = 0;
 
     msg.sender.transfer(balance);
+    LogWithdraw(msg.sender, balance);
     return true;
   }
 }

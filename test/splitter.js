@@ -1,4 +1,4 @@
-const web3 = global.web3;
+const web3 = global.web3
 const Splitter = artifacts.require('./Splitter.sol')
 
 contract('Splitter', function(accounts) {
@@ -11,10 +11,10 @@ contract('Splitter', function(accounts) {
   })
 
   describe('deposit()', async function() {
-    it('should split deposited amount equally between bob and carol', async function() {
+    it('should split deposited amount equally among bob and carol', async function() {
       let bobBalanceBefore = await splitter.balances.call(accounts[0])
       let carolBalanceBefore = await splitter.balances.call(accounts[1])
-      
+
       await splitter.deposit(accounts[0], accounts[1], {
         from: accounts[3],
         value: deposit
@@ -22,28 +22,16 @@ contract('Splitter', function(accounts) {
 
       let bobBalanceAfter = await splitter.balances.call(accounts[0])
       let carolBalanceAfter = await splitter.balances.call(accounts[1])
-
       assert.strictEqual(
-        parseInt(bobBalanceBefore.toString()),
-        0
+        bobBalanceAfter.minus(bobBalanceBefore).toString(10),
+        (deposit / 2).toString(10)
       )
-
       assert.strictEqual(
-        parseInt(carolBalanceBefore.toString()),
-        0
-      )
-
-      assert.strictEqual(
-        parseInt(bobBalanceAfter.toString()),
-        deposit / 2
-      )
-
-      assert.strictEqual(
-        carolBalanceAfter.toString(),
-        deposit / 2
+        carolBalanceAfter.minus(carolBalanceBefore).toString(10),
+        (deposit / 2).toString(10)
       )
     })
-  });
+  })
 
   describe('withdraw()', async function() {
     it('account value should be 0 after withdraw', async function() {
@@ -53,10 +41,7 @@ contract('Splitter', function(accounts) {
 
       let bobBalanceAfter = await splitter.balances.call(accounts[0])
 
-      assert.strictEqual(
-        bobBalanceAfter.toString(),
-        '0'
-      )
+      assert.strictEqual(bobBalanceAfter.toString(10), '0')
     })
-  });
+  })
 })
