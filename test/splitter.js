@@ -1,8 +1,8 @@
-const web3 = global.web3
+const web3 = require('../lib/web3')
 const Splitter = artifacts.require('./Splitter.sol')
 
 contract('Splitter', function(accounts) {
-  let deposit = web3.toWei(2, 'ether')
+  let deposit = web3.utils.toWei('2', 'ether')
 
   let splitter
 
@@ -11,7 +11,7 @@ contract('Splitter', function(accounts) {
   })
 
   describe('deposit()', async function() {
-    it('should split deposited amount equally among bob and carol', async function() {
+    it('should split deposit equally among bob and carol', async function() {
       let bobBalanceBefore = await splitter.balances.call(accounts[0])
       let carolBalanceBefore = await splitter.balances.call(accounts[1])
 

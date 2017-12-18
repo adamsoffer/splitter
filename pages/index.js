@@ -10,6 +10,8 @@ import Textfield from '../components/Textfield'
 
 const Splitter = contract(splitterArtifacts)
 
+web3.eth.getTransactionReceiptMined = require('../lib/getTransactionReceiptMined.js')
+
 if (typeof web3.eth.getBlockPromise !== 'function') {
   Promise.promisifyAll(web3.eth, { suffix: 'Promise' })
 }
@@ -17,8 +19,6 @@ if (typeof web3.eth.getBlockPromise !== 'function') {
 Splitter.setProvider(web3.currentProvider)
 
 Promise.promisifyAll(Splitter, { suffix: 'Promise' })
-
-web3.eth.getTransactionReceiptMined = require('../lib/getTransactionReceiptMined.js')
 
 // hack for web3@1.0.0 async/await support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
 if (typeof Splitter.currentProvider.sendAsync !== 'function') {
