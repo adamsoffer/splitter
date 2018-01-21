@@ -87,7 +87,7 @@ export default class extends React.Component {
   }
 
   onDeposit() {
-    Splitter.deployed().then(instance => {
+    return Splitter.deployed().then(instance => {
       // watch for changes
       instance.LogDeposit().watch((error, e) => {
         if (!error) {
@@ -106,7 +106,7 @@ export default class extends React.Component {
   }
 
   onWithdraw() {
-    Splitter.deployed().then(instance => {
+    return Splitter.deployed().then(instance => {
       instance.LogWithdraw().watch((error, e) => {
         if (!error) {
           if (e.args.from === accounts[1]) {
