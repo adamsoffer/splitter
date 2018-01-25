@@ -8,9 +8,14 @@ contract('Splitter', function(accounts) {
   let carolContractBalanceAfter
   let bobContractBalanceBefore
   let bobContractBalanceAfter
+  let bobAccountBalanceBefore
+  let bobAccountBalanceAfter
+  let gasCost
 
   before('should deploy Splitter', async function() {
-    splitter = await Splitter.new({ from: accounts[0] })
+    splitter = await Splitter.new({
+      from: accounts[3]
+    })
     bobContractBalanceBefore = await splitter.balances.call(accounts[0])
     carolContractBalanceBefore = await splitter.balances.call(accounts[1])
   })
@@ -26,7 +31,7 @@ contract('Splitter', function(accounts) {
       carolContractBalanceAfter = await splitter.balances.call(accounts[1])
 
       assert.strictEqual(
-        bobContractBalanceAfter.minus(bobContractBalanceBefore).toString(10),
+        bobContractBalanceAfter.sub(bobContractBalanceBefore).toString(10),
         web3.utils
           .toBN(deposit)
           .div(web3.utils.toBN(2))
@@ -44,14 +49,35 @@ contract('Splitter', function(accounts) {
   })
 
   describe('withdraw()', async function() {
-    it('bobs contract balance should be 0 after withdrawal', async function() {
-      await splitter.withdraw({
-        from: accounts[0]
+    it("bob's contract balance should be 0 after withdrawal", async function() {
+      bobAccountBalanceBefore = await web3.eth.getBalance(accounts[0])
+
+      let tx = await splitter.withdraw({
+        from: accounts[0],
+        gas: 1500000,
+        gasPrice: '20000000000'
       })
 
-      bobContractBalanceAfter = await splitter.balances.call(accounts[0])
+      let gasPrice = await web3.eth.getGasPrice()
 
+      gasCost = web3.utils
+        .toBN(gasPrice)
+        .mul(web3.utils.toBN(tx.receipt.gasUsed))
+      bobContractBalanceAfter = await splitter.balances.call(accounts[0])
       assert.strictEqual(bobContractBalanceAfter.toString(10), '0')
+    })
+
+    it("bob's account balance should increase by the expected amount", async function() {
+      let bobsShare = web3.utils.toBN(deposit).div(web3.utils.toBN(2))
+      bobAccountBalanceAfter = await web3.eth.getBalance(accounts[0])
+
+      assert.strictEqual(
+        web3.utils
+          .toBN(bobAccountBalanceAfter)
+          .sub(web3.utils.toBN(bobAccountBalanceBefore))
+          .toString(10),
+        bobsShare.sub(gasCost).toString(10)
+      )
     })
   })
 })
