@@ -20,6 +20,16 @@ Splitter.setProvider(web3.currentProvider)
 
 Promise.promisifyAll(Splitter, { suffix: 'Promise' })
 
+// hack for web3@1.0.0 async/await support for localhost testrpc, see https://github.com/trufflesuite/truffle-contract/issues/56#issuecomment-331084530
+if (typeof Splitter.currentProvider.sendAsync !== 'function') {
+  Splitter.currentProvider.sendAsync = function() {
+    return Splitter.currentProvider.send.apply(
+      Splitter.currentProvider,
+      arguments
+    )
+  }
+}
+
 export default class extends React.Component {
   static async getInitialProps({ pathname }) {
     const accounts = await web3.eth.getAccounts()
