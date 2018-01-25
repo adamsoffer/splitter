@@ -62,7 +62,7 @@ export default class extends React.Component {
     this.onWithdraw()
   }
 
-  handleSubmit(event) {
+  handleDepositSubmission(event) {
     event.preventDefault()
     let deposit = web3.utils.toWei(event.target.deposit.value, 'ether')
     let bob = event.target.bob.value
@@ -72,6 +72,26 @@ export default class extends React.Component {
         return instance.deposit.sendTransaction(bob, carol, {
           from: this.props.accounts[0],
           value: deposit
+        })
+      })
+      .then(function(txHashes) {
+        console.log('pending confirmation...')
+        return web3.eth.getTransactionReceiptMined(txHashes)
+      })
+      .then(function(receipts) {
+        console.log('confirmed')
+      })
+      .catch(e => {
+        console.log(e)
+      })
+  }
+
+  handleWithDrawalSubmission(event) {
+    event.preventDefault()
+    return Splitter.deployed()
+      .then(instance => {
+        return instance.withdraw.sendTransaction({
+          from: this.props.accounts[0]
         })
       })
       .then(function(txHashes) {
@@ -153,7 +173,7 @@ export default class extends React.Component {
               {web3.utils.fromWei(this.state.carolBalance.toString(), 'ether')}
             </Div>
           </Div>
-          <Form onSubmit={this.handleSubmit.bind(this)}>
+          <Form onSubmit={this.handleDepositSubmission.bind(this)}>
             <Textfield
               readonly
               disabled
@@ -177,6 +197,10 @@ export default class extends React.Component {
               type="number"
               name="deposit"
             />
+            <Button type="submit">Deposit</Button>
+          </Form>
+
+          <Form onSubmit={this.handleWithdrawalSubmission.bind(this)}>
             <Button type="submit">Deposit</Button>
           </Form>
         </Div>
