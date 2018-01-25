@@ -1,7 +1,7 @@
 import React from 'react'
 import { default as contract } from 'truffle-contract'
 import Promise from 'bluebird'
-import { Div, Span, H1, Form } from 'glamorous'
+import { Div, Span, H1, H2, Form } from 'glamorous'
 import splitterArtifacts from '../build/contracts/Splitter.json'
 import web3 from '../lib/web3'
 import Main from '../lib/layout'
@@ -86,7 +86,7 @@ export default class extends React.Component {
       })
   }
 
-  handleWithDrawalSubmission(event) {
+  handleWithdrawalSubmission(event) {
     event.preventDefault()
     return Splitter.deployed()
       .then(instance => {
@@ -173,36 +173,42 @@ export default class extends React.Component {
               {web3.utils.fromWei(this.state.carolBalance.toString(), 'ether')}
             </Div>
           </Div>
-          <Form onSubmit={this.handleDepositSubmission.bind(this)}>
-            <Textfield
-              readonly
-              disabled
-              value={this.props.accounts[1]}
-              label="Bob Address"
-              type="text"
-              name="bob"
-            />
-            <Textfield
-              readonly
-              disabled
-              value={this.props.accounts[2]}
-              label="Carol Address"
-              type="text"
-              name="carol"
-            />
-            <Textfield
-              placeholder="ex: 10"
-              step="any"
-              label="Deposit Amount"
-              type="number"
-              name="deposit"
-            />
-            <Button type="submit">Deposit</Button>
-          </Form>
-
-          <Form onSubmit={this.handleWithdrawalSubmission.bind(this)}>
-            <Button type="submit">Deposit</Button>
-          </Form>
+          <Div lineHeight="1.5" marginBottom="30px">
+            <Form onSubmit={this.handleDepositSubmission.bind(this)}>
+              <Textfield
+                readonly
+                disabled
+                value={this.props.accounts[1]}
+                label="Bob Address"
+                type="text"
+                name="bob"
+              />
+              <Textfield
+                readonly
+                disabled
+                value={this.props.accounts[2]}
+                label="Carol Address"
+                type="text"
+                name="carol"
+              />
+              <Textfield
+                placeholder="ex: 10"
+                step="any"
+                label="Deposit Amount"
+                type="number"
+                name="deposit"
+              />
+              <Button type="submit">Deposit</Button>
+            </Form>
+          </Div>
+          <Div lineHeight="1.5" marginBottom="30px">
+            <H2 fontSize="24px" marginBottom="20px">
+              Withdraw your funds.
+            </H2>
+            <Form onSubmit={this.handleWithdrawalSubmission.bind(this)}>
+              <Button type="submit">Withdraw</Button>
+            </Form>
+          </Div>
         </Div>
       </Main>
     )
