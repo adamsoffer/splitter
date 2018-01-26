@@ -123,14 +123,12 @@ export default class extends React.Component {
   }
 
   onWithdraw() {
-    console.log('test')
     return Splitter.deployed().then(instance => {
       let event = instance.LogWithdraw()
       event.watch(async (error, e) => {
         if (!error) {
           let from = await instance.balances.call(e.args.from)
           let contractBalance = await web3.eth.getBalance(instance.address)
-          console.log('withdraw')
           let newBalances = {
             [e.args.from]: from
           }
