@@ -176,19 +176,6 @@ export default class extends React.Component {
                 </Div>
               )
             })}
-
-            {/* <Div>
-              <Span marginRight="5px">Alice's Balance:</Span>
-              {web3.utils.fromWei(this.state.aliceBalance.toString(), 'ether')}
-            </Div>
-            <Div>
-              <Span marginRight="5px">Bob's Balance:</Span>
-              {web3.utils.fromWei(this.state.bobBalance.toString(), 'ether')}
-            </Div>
-            <Div>
-              <Span marginRight="5px">Carol's Balance:</Span>
-              {web3.utils.fromWei(this.state.carolBalance.toString(), 'ether')}
-            </Div> */}
           </Div>
           <Div lineHeight="1.5" marginBottom="30px">
             <Form onSubmit={this.handleDepositSubmission.bind(this)}>
