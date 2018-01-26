@@ -48,16 +48,6 @@ export default class extends React.Component {
     this.setAccount()
     this.onDeposit()
     this.onWithdraw()
-    this.getBalances()
-  }
-
-  async getBalances() {
-    let instance = await Splitter.deployed()
-    let transferEvent = instance.LogDeposit(
-      {},
-      { fromBlock: 0, toBlock: 'latest' }
-    )
-    transferEvent.get((error, logs) => {})
   }
 
   async setAccount() {
