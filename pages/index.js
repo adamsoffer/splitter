@@ -31,11 +31,6 @@ if (typeof Splitter.currentProvider.sendAsync !== 'function') {
 }
 
 export default class extends React.Component {
-  static async getInitialProps({ pathname }) {
-    const instance = await Splitter.deployed()
-    return {}
-  }
-
   constructor(props) {
     super(props)
     this.state = {
