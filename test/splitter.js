@@ -51,14 +51,12 @@ contract('Splitter', function(accounts) {
   describe('withdraw()', async function() {
     it("bob's contract balance should be 0 after withdrawal", async function() {
       bobAccountBalanceBefore = await web3.eth.getBalance(accounts[0])
-
+      let gasPrice = await web3.eth.getGasPrice()
       let tx = await splitter.withdraw({
         from: accounts[0],
-        gas: 1500000,
-        gasPrice: '20000000000'
+        gas: '1500000',
+        gasPrice
       })
-
-      let gasPrice = await web3.eth.getGasPrice()
 
       gasCost = web3.utils
         .toBN(gasPrice)

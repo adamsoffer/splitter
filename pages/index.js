@@ -32,34 +32,37 @@ if (typeof Splitter.currentProvider.sendAsync !== 'function') {
 
 export default class extends React.Component {
   static async getInitialProps({ pathname }) {
-    const accounts = await web3.eth.getAccounts()
     const instance = await Splitter.deployed()
-    const contractBalance = await web3.eth.getBalance(instance.address)
-    const aliceBalance = await web3.eth.getBalance(accounts[0])
-    const bobBalance = await instance.balances.call(accounts[1])
-    const carolBalance = await instance.balances.call(accounts[2])
-    return {
-      accounts,
-      aliceBalance,
-      contractBalance,
-      bobBalance,
-      carolBalance
-    }
+    return {}
   }
 
   constructor(props) {
     super(props)
     this.state = {
-      contractBalance: props.contractBalance,
-      aliceBalance: props.aliceBalance,
-      bobBalance: props.bobBalance,
-      carolBalance: props.carolBalance
+      contractBalance: 0,
+      balances: {}
     }
   }
 
   componentDidMount() {
+    this.setAccount()
     this.onDeposit()
     this.onWithdraw()
+    this.getBalances()
+  }
+
+  async getBalances() {
+    let instance = await Splitter.deployed()
+    let transferEvent = instance.LogDeposit(
+      {},
+      { fromBlock: 0, toBlock: 'latest' }
+    )
+    transferEvent.get((error, logs) => {})
+  }
+
+  async setAccount() {
+    let accounts = await web3.eth.getAccounts()
+    this.setState({ account: accounts[0] })
   }
 
   handleDepositSubmission(event) {
@@ -70,7 +73,7 @@ export default class extends React.Component {
     return Splitter.deployed()
       .then(instance => {
         return instance.deposit.sendTransaction(bob, carol, {
-          from: this.props.accounts[0],
+          from: this.state.account,
           value: deposit
         })
       })
@@ -89,9 +92,12 @@ export default class extends React.Component {
   handleWithdrawalSubmission(event) {
     event.preventDefault()
     return Splitter.deployed()
-      .then(instance => {
+      .then(async instance => {
+        let gasPrice = await web3.eth.getGasPrice()
         return instance.withdraw.sendTransaction({
-          from: this.props.accounts[0]
+          from: this.state.account,
+          gas: '1500000',
+          gasPrice
         })
       })
       .then(function(txHashes) {
@@ -107,16 +113,22 @@ export default class extends React.Component {
   }
 
   onDeposit() {
-    return Splitter.deployed().then(instance => {
-      // watch for changes
-      instance.LogDeposit().watch((error, e) => {
+    return Splitter.deployed().then(async instance => {
+      let event = instance.LogDeposit({}, { fromBlock: 0, toBlock: 'latest' })
+      event.watch(async (error, e) => {
         if (!error) {
+          let bobBalance = await instance.balances.call(e.args.bob)
+          let carolBalance = await instance.balances.call(e.args.carol)
+          let contractBalance = await web3.eth.getBalance(instance.address)
+
+          let newBalances = {
+            [e.args.bob]: bobBalance,
+            [e.args.carol]: carolBalance
+          }
+
           this.setState({
-            contractBalance: this.state.contractBalance + e.args.deposit,
-            aliceBalance: this.state.aliceBalance - deposit,
-            bobBalance: this.state.bobBalance + e.args.deposit / 2,
-            carolBalance:
-              this.state.carolBalance + (e.args.deposit - e.args.deposit / 2)
+            contractBalance: contractBalance,
+            balances: { ...this.state.balances, ...newBalances }
           })
         } else {
           console.log(error)
@@ -126,18 +138,22 @@ export default class extends React.Component {
   }
 
   onWithdraw() {
+    console.log('test')
     return Splitter.deployed().then(instance => {
-      instance.LogWithdraw().watch((error, e) => {
+      let event = instance.LogWithdraw()
+      event.watch(async (error, e) => {
         if (!error) {
-          if (e.args.from === accounts[1]) {
-            this.setState({
-              bobBalance: this.state.bobBalance - e.args.withdrawnAmount
-            })
-          } else {
-            this.setState({
-              carolBalance: this.state.carolBalance - e.args.withdrawnAmount
-            })
+          let from = await instance.balances.call(e.args.from)
+          let contractBalance = await web3.eth.getBalance(instance.address)
+          console.log('withdraw')
+          let newBalances = {
+            [e.args.from]: from
           }
+
+          this.setState({
+            contractBalance: contractBalance,
+            balances: { ...this.state.balances, ...newBalances }
+          })
         } else {
           console.log(error)
         }
@@ -155,12 +171,28 @@ export default class extends React.Component {
           <Div lineHeight="1.5" marginBottom="30px">
             <Div>
               <Span marginRight="5px">Contract Balance:</Span>
-              {web3.utils.fromWei(
-                this.state.contractBalance.toString(),
-                'ether'
-              )}
+              <Span fontWeight="bold">
+                {web3.utils.fromWei(
+                  this.state.contractBalance.toString(),
+                  'ether'
+                )}
+              </Span>
             </Div>
-            <Div>
+            {Object.keys(this.state.balances).map((address, keyIndex) => {
+              return (
+                <Div key={keyIndex}>
+                  <Span marginRight="5px">{address}:</Span>
+                  <Span fontWeight="bold">
+                    {web3.utils.fromWei(
+                      this.state.balances[address].toString(),
+                      'ether'
+                    )}
+                  </Span>
+                </Div>
+              )
+            })}
+
+            {/* <Div>
               <Span marginRight="5px">Alice's Balance:</Span>
               {web3.utils.fromWei(this.state.aliceBalance.toString(), 'ether')}
             </Div>
@@ -171,26 +203,12 @@ export default class extends React.Component {
             <Div>
               <Span marginRight="5px">Carol's Balance:</Span>
               {web3.utils.fromWei(this.state.carolBalance.toString(), 'ether')}
-            </Div>
+            </Div> */}
           </Div>
           <Div lineHeight="1.5" marginBottom="30px">
             <Form onSubmit={this.handleDepositSubmission.bind(this)}>
-              <Textfield
-                readonly
-                disabled
-                value={this.props.accounts[1]}
-                label="Bob Address"
-                type="text"
-                name="bob"
-              />
-              <Textfield
-                readonly
-                disabled
-                value={this.props.accounts[2]}
-                label="Carol Address"
-                type="text"
-                name="carol"
-              />
+              <Textfield label="Bob Address" type="text" name="bob" />
+              <Textfield label="Carol Address" type="text" name="carol" />
               <Textfield
                 placeholder="ex: 10"
                 step="any"
